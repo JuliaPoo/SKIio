@@ -1,0 +1,21 @@
+; +----------------------+
+; | Echo Server in Purr! |
+; +----------------------+
+; Building:
+;   python -m skiio --compile echo-server.purr echo-server.ski
+; Running:
+;   python -m skiio --run echo-server.ski
+
+; Z Combinator
+#Zcom
+[f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
+~
+
+; Main program
+!
+Zcom(
+    [f:
+        ATOM_OUT(ATOM_IN(I))(f(I)) ; loop indefinitely
+    ]
+)
+~

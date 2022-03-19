@@ -1,9 +1,28 @@
-; [ZCombinator:
-; 
-; ZCombinator([f:
-;     o(i(I))(f(I))
-; ])
-; 
-; ]([f:[g:f(g(g))]([g:f([y:g(g)(y)])])])
+; +-----------------------------+
+; | Compiled from Purr   /\_/\  |
+; | Purr Source: -.-    (:o.o<) |
+; +----------------------> ^ <--+
+;
+;    |; +----------------------+
+;    |; | Echo Server in Purr! |
+;    |; +----------------------+
+;    |; Building:
+;    |;   python -m skiio --compile echo-server.purr echo-server.ski
+;    |; Running:
+;    |;   python -m skiio --run echo-server.ski
+;    |
+;    |; Z Combinator
+;    |#Zcom
+;    |[f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
+;    |~
+;    |
+;    |; Main program
+;    |!
+;    |Zcom(
+;    |    [f:
+;    |        OUT(IN(I))(f(I)) ; loop indefinitely
+;    |    ]
+;    |)
+;    |~
 
 S(I)(K(S(K(o(i(I))))(S(S)(K)(I))))(S(S(K(S(S)(K(S(I)(I)))))(K))(S(K(S(S)(K(S(I)(I)))))(K)))

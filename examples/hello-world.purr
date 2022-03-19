@@ -1,0 +1,16 @@
+; +----------------------+
+; | Hello World in Purr! |
+; +----------------------+
+; Building:
+;   python -m skiio --compile hello-world.purr hello-world.ski
+; Running:
+;   python -m skiio --run hello-world.ski
+
+; Main program
+!
+[o: ; Shortform for OUT
+    o(.H)(o(.e))(o(.l))(o(.l))(o(.o))   ; Hello
+        (o(.20)) ; space
+    (o(.W))(o(.o))(o(.r))(o(.l))(o(.d))(o(.21))  ; World!
+](ATOM_OUT)
+~
