@@ -1,0 +1,9 @@
+; [ZCombinator:
+; 
+; ZCombinator([f:
+;     o(i(I))(f(I))
+; ])
+; 
+; ]([f:[g:f(g(g))]([g:f([y:g(g)(y)])])])
+
+S(I)(K(S(K(o(i(I))))(S(S)(K)(I))))(S(S(K(S(S)(K(S(I)(I)))))(K))(S(K(S(S)(K(S(I)(I)))))(K)))
