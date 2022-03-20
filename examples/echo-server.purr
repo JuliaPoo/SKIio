@@ -15,7 +15,7 @@
 !
 Zcom(
     [f:
-        ATOM_OUT(ATOM_IN(I))(f(I)) ; loop indefinitely
+        ATOM_OUT(ATOM_IN(ATOM_I))(f(ATOM_I)) ; loop indefinitely
     ]
 )
 ~

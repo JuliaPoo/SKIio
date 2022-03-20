@@ -14,7 +14,7 @@ compiled into _SKIio_ before being intepreted.
 
 ### Comments
 
-```
+```lisp
 ; A semicolon denotes a comment
 ; All content after a `;` in the same line is ignored
 ```
@@ -32,22 +32,18 @@ compiled into _SKIio_ before being intepreted.
 
 ### Lambda Expressions
 
-```
-`[x:y]` denotes a function with input `x` and output `y`
-E.g.
-   `[x:x]` is the identity function
+`[x:y]` denotes a function with input `x` and output `y`.
+E.g. `[x:x]` is the identity function
 
-You can call lambda expressions with `(argument)`
-E.g.
-   `[x:x](a)` is equivalent to `a`
-```
+You can call lambda expressions with `(argument)`.
+E.g. `[x:x](a)` is equivalent to `a`
 
 ### Main Function Declaration
 
 The _Main Function_ will be the "entrypoint" of the program.
 This function is the only function called by the intepreter.
 
-```
+```lisp
 !
 <lambda expression>
 ~
@@ -55,18 +51,18 @@ This function is the only function called by the intepreter.
 
 E.g:
 
-```
+```lisp
 ; Main program
 !
 ATOM_OUT(ATOM_IN(I)) ; Main program reads and prints one byte of user input
 ~
 ```
 
-### Function Declaration
+### Macro Declaration
 
-You can declare other functions to be called elsewhere.
+You can declare other macros to be called elsewhere.
 
-```
+```lisp
 #<function name>
 <lambda expression>
 ~
@@ -74,7 +70,7 @@ You can declare other functions to be called elsewhere.
 
 E.g:
 
-```
+```lisp
 ; Prints a char
 #WRITE_CHAR
 [char: ATOM_OUT(char)]
@@ -86,7 +82,28 @@ WRITE_CHAR(ATOM_IN(I)) ; Prints one byte of user input
 ~
 ```
 
-### Church Encodings
+#### Macro Order
+
+Macros are not allowed to call itself, and macros defined after it.
+E.g. The following are not valid:
+
+```lisp
+#self_reference
+self_reference() ; No recursive macros!
+~
+```
+
+```lisp
+#defined_before
+defined_after(I) ; Calling a macro defined after itself not allowed!
+~
+
+#defined_after
+[x:x]
+~
+```
+
+### Built-in Church Encodings
 
 If would be extremely clunky to write church encodings of integers you need.
 Say if you need the number `5`, you'd have to write `[f:[x:f(f(f(f(f(x)))))]]`.
@@ -97,4 +114,9 @@ refers to the hex of `5`. Similarly `100 => .64`, `16 => .0f`. The hex has to be
 can't represent a number `n < 0` or `n > 255` with this.
 
 Furthermore, to refer to the church encoding ascii char `H`, one can also do `.H`,
-which is equivalent to doing `.48`.
+which is equivalent to doing `.48`. This option is available for the following set
+of characters:
+
+```
+0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+```
