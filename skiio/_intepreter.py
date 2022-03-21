@@ -185,12 +185,11 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
     return _SKIEvalNode_str(curr)
 
 
-def interpret_SKI_from_file(filename: str, dbg: bool = False) -> str:
+def interpret_SKI_from_str(code: str, dbg: bool = False) -> str:
 
     ski = ""
-    with open(filename) as f:
-        for line in f:
-            ski += line.split(";")[0]
+    for line in code.split("\n"):
+        ski += line.split(";")[0]
     skinode = SKInode.from_str(ski)
 
     return interpret_SKI(skinode, dbg)

@@ -14,8 +14,10 @@
 ;    |; Main program
 ;    |!
 ;    |[o: ; Shortform for OUT
-;    |    o(~H)(o(~e))(o(~l))(o(~l))(o(~o))   ; Hello
-;    |        (o(~ )) ; space
-;    |    (o(~W))(o(~o))(o(~r))(o(~l))(o(~d))(o(~!))  ; World!
-;    |](OUT)
+;    |    o(.H)(o(.e))(o(.l))(o(.l))(o(.o))   ; Hello
+;    |        (o(.20)) ; space
+;    |    (o(.W))(o(.o))(o(.r))(o(.l))(o(.d))(o(.21))  ; World!
+;    |](ATOM_OUT)
 ;    |~
+
+S(S(S(S(S(S(S(S(S(S(S(S(I)(K(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K)(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(I))(S(S(K(S))(K))(I)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(S(S(K(S))(K))(I))))(S(S(K(S))(K))(I))))))(S(I)(K(S(S(K(S))(K))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(I)))(I))))))(S(I)(K(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K)(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(S(S(K(S))(K))(I))))))))(S(I)(K(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K)(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(S(S(K(S))(K))(I))))))))(S(I)(K(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I))))))))(S(I)(K(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(I))(S(S(K(S))(K))(S(S(K(S))(K))(S(S(K(S))(K))(I))))))))(S(I)(K(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))))(S(S(K(S))(K))(S(S(K(S))(K))(I)))))))(S(I)(K(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I))))))))(S(I)(K(S(S(K(S))(K))(S(S(K(S))(K))(S(S(K(S))(K))(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K))(S(S(K(S))(K)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I)))))))))))(S(I)(K(S(K(S(S(I)(K(S(S(K(S))(K)))))))(K)(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(I)))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(S(S(K(S))(K))(S(S(K(S))(K))(I))))))))(S(I)(K(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(S(S(K(S))(K))(I)))(I)))(I)))))(S(I)(K(S(S(K(S))(K))(S(K(S(S(S(K(S))(K)))))(K)(S(S(K(S))(K))(I))(S(S(K(S))(K))(S(S(K(S))(K))(S(S(K(S))(K))(I))))))))(o)

@@ -12,14 +12,15 @@ _ATOMS: Dict[str, str] = {
     "o": "o",
 }
 
-_VALID_NAME_REGEX: str = r"[a-zA-Z0-9_]+"
+_VALID_NAME_REGEX: str = r"[a-zA-Z0-9_\.]+"
 
 SKInode_T = Union["SKInode", str]
 
 
-def gen_new_name(avoid: list = []) -> str:
+def gen_new_name(avoid: list = [], prefix: str = "") -> str:
     names = string.ascii_lowercase + string.ascii_uppercase
     for n in names:
+        n = prefix + n
         if n in avoid:
             continue
         return n
@@ -255,7 +256,7 @@ def get_all_free(expr: SKInode_T, _ctx: set = set()) -> set:
     if isinstance(expr, str):
         if expr in _ctx:
             return set()
-        return set(expr)
+        return set([expr])
 
     t = expr.node_type
     c1, c2 = expr.childs

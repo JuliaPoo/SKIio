@@ -13,7 +13,7 @@ from ._compiler_ski import compile_node_to_ski
 warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}"
 
 _VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
-_VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9]{2})[^a-zA-Z0-9]")
+_VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9]{2})(?:[^a-zA-Z0-9]|$)")
 
 _RESERVED_NAMES: Dict[str, str] = {
     "ATOM_OUT": "o",
@@ -336,8 +336,9 @@ def _build_macro(
                 tok.col,
             )
 
-        node = skibyte.SKI_byte[val]
-        free = {}
+        node = f".{format(val, '02x')}"
+        tok.tok = node
+        free = {tok.tok: [tok]}
         idx = 1
 
     else:
@@ -429,6 +430,7 @@ def compile_purr_to_node(code: str) -> SKInode_T:
     str_token_map = {t.tok: t for t in macro_nodes.keys()}
 
     adjacency = {}
+    church_encodings: Set[str] = set()
     for k, (_, f) in macro_nodes.items():
         adjk = []
         for t in f.keys():
@@ -439,6 +441,11 @@ def compile_purr_to_node(code: str) -> SKInode_T:
                 # If free variable is a reserved word, then it's fine
                 # since it's predefined.
                 if t in _RESERVED_NAMES:
+                    continue
+
+                # It could also be a church encoding
+                if t[0] == ".":
+                    church_encodings.add(t)
                     continue
 
                 tok = f[t][0]  # Just raise error on first instance
@@ -466,13 +473,18 @@ def compile_purr_to_node(code: str) -> SKInode_T:
     for a, b in _RESERVED_NAMES.items():
         node = sub(node, a, b)
 
-    return node
+    return node, church_encodings
 
 
 def compile_purr_to_ski_str(code: str) -> str:
 
-    node = compile_purr_to_node(code)
+    node, church = compile_purr_to_node(code)
     ski = compile_node_to_ski(node)
+
+    # Replace church encodings with SKI equivalent
+    for c in church:
+        val = int(c[1:], 16)
+        ski = sub(ski, c, skibyte.SKI_byte[val])
 
     header = "\n".join(
         [
