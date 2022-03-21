@@ -4,7 +4,17 @@ from enum import Enum, unique
 import re
 import string
 
+import warnings
+
+
+def _warn_formatting(msg, *args, **kwargs):
+    return f"[-] PurrWarning: {msg}\n"
+
+
+warnings.formatwarning = _warn_formatting
+
 from ._skinode import SKInode, NodeType, SKInode_T
+from .utils import skibyte
 from ._exceptions import *
 
 _VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
@@ -60,6 +70,7 @@ def _tokenize(code: str) -> List[Token]:
 
     for lno, line in enumerate(codelines):
 
+        lno += 1
         cno = 0
         while cno < len(line):
 
@@ -285,7 +296,30 @@ def _build_macro(
         idx = 1
 
     elif tok.type == TokenType.CHURCH_ENC:
-        raise NotImplementedError("meh")
+
+        if len(tok.tok) == 2:  # Of the form .<char>
+            val = ord(tok.tok[1:])
+        elif len(tok.tok) == 3:  # Of the form .<hex-byte>
+            val = int(tok.tok[1:], 16)
+        else:
+            raise PurrCompileSyntaxException(
+                f"Token {tok} is an invalid church encoding! "
+                + "Expected the form .<char> (e.g. .H) or .<hex-byte> (e.g. .0f)",
+                tok.line,
+                tok.col,
+            )
+
+        if val >= 0x100:
+            raise PurrCompileASTException(
+                f"Token {tok} represents a church encoding more than 0x100! "
+                + "Only support chuch encodings 0 <= n < 0x100",
+                tok.line,
+                tok.col,
+            )
+
+        node = skibyte.SKI_byte[val]
+        free = {}
+        idx = 1
 
     else:
         raise PurrCompileSyntaxException(
@@ -329,3 +363,69 @@ def _build_macro(
         idx = argi + 1
 
     return node, free
+
+
+def _topological_sort_macros(
+    adjacency: Dict[Token, List[Token]],
+    start: Token,
+    _marked: Optional[Dict[Token, bool]] = None,
+    _childs: Optional[List[Token]] = None,
+    _acc: Optional[Tuple[Token]] = None,
+) -> List[Token]:
+
+    if _marked is None:
+        _marked = {}
+    if _acc is None:
+        _acc = []
+    if _childs is None:
+        _childs = ()
+
+    _childs = (*_childs, start)
+    if start in _marked:
+
+        suc = _marked[start]
+        if suc:
+            return _acc
+
+        loop = _childs[_childs.index(start) :]
+        raise PurrCompileASTException(
+            f"Recursive macro! `{'->'.join(map(str, loop))}`", start.line, start.col
+        )
+
+    _marked[start] = False
+    for n in adjacency[start]:
+        _acc = _topological_sort_macros(adjacency, n, _marked, _childs, _acc)
+
+    _marked[start] = True
+    _acc.append(start)
+    return _acc
+
+
+def compile_purr_to_node(code: str) -> SKInode_T:
+
+    tokens = _tokenize(code)
+    macros = _build_globals_dict(tokens)
+
+    macro_nodes = {k: _build_macro(m) for k, m in macros.items()}
+    str_token_map = {t.tok: t for t in macro_nodes.keys()}
+    adjacency = {
+        k: [str_token_map[t] for t in f.keys()] for k, (_, f) in macro_nodes.items()
+    }
+
+    macro_order_keys = _topological_sort_macros(adjacency, str_token_map["!"])[::-1]
+    unused_macros = set(macro_nodes.keys()) - set(macro_order_keys)
+    if unused_macros:
+        warnings.warn(f"Unused macros: {[*map(str, unused_macros)]}")
+
+    macro_order_nodes = [macro_nodes[m][0] for m in macro_order_keys]
+    node = macro_order_nodes[0]
+    for k, n in zip(macro_order_keys[1:], macro_order_nodes[1:]):
+        # [k:node](n)
+        # Effectively letting `node` access `n` via variable name `k`
+        node = SKInode(NodeType.CALL, (SKInode(NodeType.DECL, (k, node)), n))
+
+    return node
+
+
+def compile_purr_to_ski_str():
+    ...

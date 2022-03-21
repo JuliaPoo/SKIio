@@ -3,7 +3,7 @@ class _PurrCompileException(Exception):
     """Generic exception for Purr compilation"""
 
     def __init__(self, message: str, line: int, col: int):
-        message = f"{message} :: Line: {line} Col: {col}"
+        message = f"[x] {message} | Line: {line} Col: {col}"
         super().__init__(message)
 
 

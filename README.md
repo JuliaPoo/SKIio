@@ -84,7 +84,7 @@ WRITE_CHAR(ATOM_IN(I)) ; Prints one byte of user input
 
 #### Macro Order
 
-Macros are not allowed to call itself, and macros defined after it.
+Macros are not allowed to call itself, and macros cannot be recursive.
 E.g. The following are not valid:
 
 ```lisp
@@ -95,11 +95,11 @@ self_reference() ; No recursive macros!
 
 ```lisp
 #defined_before
-defined_after(I) ; Calling a macro defined after itself not allowed!
+defined_after(I)
 ~
 
 #defined_after
-[x:x]
+defined_before(I) ; Calling a macro that called itself (loop!)
 ~
 ```
 

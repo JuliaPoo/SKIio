@@ -58,7 +58,7 @@ def _optimise(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
 
 
 @lru_cache(maxsize=None)
-def _compile_lambda_to_SKI(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
+def _compile_node_to_ski(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
 
     # T[x] => x
     if isinstance(expr, str):
@@ -69,7 +69,7 @@ def _compile_lambda_to_SKI(expr: SKInode_T, optimisation: bool = True) -> SKInod
         return _optimise(e, optimisation)
 
     def T(e):
-        return O(_compile_lambda_to_SKI(e, optimisation))
+        return O(_compile_node_to_ski(e, optimisation))
 
     C, D, N = NodeType.CALL, NodeType.DECL, SKInode
 
@@ -103,11 +103,11 @@ def _compile_lambda_to_SKI(expr: SKInode_T, optimisation: bool = True) -> SKInod
     return O(N(C, (N(C, ("S", ta)), tb)))
 
 
-def compile_lambda_to_SKI(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
-    expr = _compile_lambda_to_SKI(expr, optimisation)
+def compile_node_to_ski(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
+    expr = _compile_node_to_ski(expr, optimisation)
     return expr
 
 
-def compile_lambda_to_SKI_str(expr_str: str, optimisation: bool = True) -> str:
+def compile_node_to_SKI_str(expr_str: str, optimisation: bool = True) -> str:
     expr = SKInode.from_str(expr_str)
-    return str(compile_lambda_to_SKI(expr, optimisation))
+    return str(compile_node_to_ski(expr, optimisation))
