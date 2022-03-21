@@ -3,24 +3,25 @@ from dataclasses import dataclass
 from enum import Enum, unique
 import re
 import string
-
 import warnings
 
-
-def _warn_formatting(msg, *args, **kwargs):
-    return f"[-] PurrWarning: {msg}\n"
-
-
-warnings.formatwarning = _warn_formatting
-
-from ._skinode import SKInode, NodeType, SKInode_T
+from ._skinode import SKInode, NodeType, SKInode_T, sub
 from .utils import skibyte
 from ._exceptions import *
+from ._compiler_ski import compile_node_to_ski
+
+warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}"
 
 _VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
 _VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9]{2})[^a-zA-Z0-9]")
 
-_RESERVED_NAMES: Set[str] = set(["ATOM_OUT", "ATOM_IN", "ATOM_S", "ATOM_K", "ATOM_I"])
+_RESERVED_NAMES: Dict[str, str] = {
+    "ATOM_OUT": "o",
+    "ATOM_IN": "i",
+    "ATOM_S": "S",
+    "ATOM_K": "K",
+    "ATOM_I": "I",
+}
 _CHUCH_LETTERS: str = string.digits + string.ascii_letters
 
 
@@ -112,7 +113,7 @@ def _tokenize(code: str) -> List[Token]:
                 match = _VALID_CHURCH_INT.match(line[cno + 1 :])
                 if not match:
                     raise PurrCompileSyntaxException(
-                        f"Invalid church token! {line[cno:]}", lno, cno
+                        f"Invalid church token! `{line[cno:]}...`", lno, cno
                     )
                 tok = "." + match.group(1)
                 tokens.append(Token(lno, cno, TokenType.CHURCH_ENC, tok))
@@ -139,7 +140,7 @@ def _tokenize(code: str) -> List[Token]:
 
             else:
                 raise PurrCompileSyntaxException(
-                    f"Unknown token! {line[cno:]}", lno, cno
+                    f"Unknown token! `{line[cno:]}...`", lno, cno
                 )
 
             cno += 1
@@ -163,6 +164,20 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
         if tok.type == TokenType.MACRO_START:
             acc = []
             macro_name = tokens[ptr + 1]
+
+            if macro_name.type != TokenType.NAME:
+                if macro_name.type == TokenType.RESERVED_NAME:
+                    raise PurrCompileSyntaxException(
+                        f"Cannot use reserved name `{macro_name}` as variable name!",
+                        macro_name.line,
+                        macro_name.col,
+                    )
+                raise PurrCompileSyntaxException(
+                    f"Unexpected token: `{macro_name}`, expected a variable name!",
+                    macro_name.line,
+                    macro_name.col,
+                )
+
             ptr += 2
             continue
 
@@ -214,7 +229,7 @@ def _get_balancing_bracket(
     t = tokens[0]
     if t.type != start:
         raise PurrCompileInternalException(
-            f"Invalid call to `_get_balancing_bracket`! {t}.."
+            f"Invalid call to `_get_balancing_bracket`! `{t}..`"
             + "`tokens` must start with a token of type `start`",
             t.line,
             t.col,
@@ -231,7 +246,9 @@ def _get_balancing_bracket(
         if depth == 0:
             return idx
 
-    raise PurrCompileSyntaxException(f"No closing bracket found for {t}", t.line, t.col)
+    raise PurrCompileSyntaxException(
+        f"No closing bracket found for `{t}`", t.line, t.col
+    )
 
 
 def _build_macro(
@@ -258,10 +275,12 @@ def _build_macro(
         if t1.type != TokenType.NAME:
             if t1.type == TokenType.RESERVED_NAME:
                 raise PurrCompileSyntaxException(
-                    "Cannot use reserved name as variable name!", t1.line, t1.col
+                    f"Cannot use reserved name `{t1}` as variable name!",
+                    t1.line,
+                    t1.col,
                 )
             raise PurrCompileSyntaxException(
-                f"Unexpected token: {t1}, expected a variable name!", t1.line, t1.col
+                f"Unexpected token: `{t1}`, expected a variable name!", t1.line, t1.col
             )
 
         namespace = namespace.copy()
@@ -270,7 +289,7 @@ def _build_macro(
         # [x:y] at :
         if t2.type != TokenType.DECL_MID:
             raise PurrCompileSyntaxException(
-                f"Unexpected token: {t2}, expected `:`", t2.line, t2.col
+                f"Unexpected token: `{t2}`, expected `:`", t2.line, t2.col
             )
 
         # [x:y] at y
@@ -303,7 +322,7 @@ def _build_macro(
             val = int(tok.tok[1:], 16)
         else:
             raise PurrCompileSyntaxException(
-                f"Token {tok} is an invalid church encoding! "
+                f"Token `{tok}` is an invalid church encoding! "
                 + "Expected the form .<char> (e.g. .H) or .<hex-byte> (e.g. .0f)",
                 tok.line,
                 tok.col,
@@ -311,7 +330,7 @@ def _build_macro(
 
         if val >= 0x100:
             raise PurrCompileASTException(
-                f"Token {tok} represents a church encoding more than 0x100! "
+                f"Token `{tok}` represents a church encoding more than 0x100! "
                 + "Only support chuch encodings 0 <= n < 0x100",
                 tok.line,
                 tok.col,
@@ -323,7 +342,7 @@ def _build_macro(
 
     else:
         raise PurrCompileSyntaxException(
-            f"Unexpected token: {tok}, expected a "
+            f"Unexpected token: `{tok}`, expected a "
             + "name, church encoding, or function",
             tok.line,
             tok.col,
@@ -334,7 +353,7 @@ def _build_macro(
         tok = tokens[idx]
         if tok.type != TokenType.CALL_START:
             raise PurrCompileSyntaxException(
-                f"Unexpected token: {tok}, expected `(`", tok.line, tok.col
+                f"Unexpected token: `{tok}`, expected `(`", tok.line, tok.col
             )
 
         argi = (
@@ -408,9 +427,28 @@ def compile_purr_to_node(code: str) -> SKInode_T:
 
     macro_nodes = {k: _build_macro(m) for k, m in macros.items()}
     str_token_map = {t.tok: t for t in macro_nodes.keys()}
-    adjacency = {
-        k: [str_token_map[t] for t in f.keys()] for k, (_, f) in macro_nodes.items()
-    }
+
+    adjacency = {}
+    for k, (_, f) in macro_nodes.items():
+        adjk = []
+        for t in f.keys():
+
+            # A free variable isn't one of the defined macros
+            if t not in str_token_map:
+
+                # If free variable is a reserved word, then it's fine
+                # since it's predefined.
+                if t in _RESERVED_NAMES:
+                    continue
+
+                tok = f[t][0]  # Just raise error on first instance
+                raise PurrCompileASTException(
+                    f"Unknown macro reference `{tok}`!", tok.line, tok.col
+                )
+
+            adjk.append(str_token_map[t])
+
+        adjacency[k] = adjk
 
     macro_order_keys = _topological_sort_macros(adjacency, str_token_map["!"])[::-1]
     unused_macros = set(macro_nodes.keys()) - set(macro_order_keys)
@@ -422,10 +460,28 @@ def compile_purr_to_node(code: str) -> SKInode_T:
     for k, n in zip(macro_order_keys[1:], macro_order_nodes[1:]):
         # [k:node](n)
         # Effectively letting `node` access `n` via variable name `k`
-        node = SKInode(NodeType.CALL, (SKInode(NodeType.DECL, (k, node)), n))
+        node = SKInode(NodeType.CALL, (SKInode(NodeType.DECL, (k.tok, node)), n))
+
+    # Substitute all the Purr's atoms for SKInode's atoms
+    for a, b in _RESERVED_NAMES.items():
+        node = sub(node, a, b)
 
     return node
 
 
-def compile_purr_to_ski_str():
-    ...
+def compile_purr_to_ski_str(code: str) -> str:
+
+    node = compile_purr_to_node(code)
+    ski = compile_node_to_ski(node)
+
+    header = "\n".join(
+        [
+            "; +-----------------------------+",
+            "; | Compiled from Purr   /\_/\  |",
+            "; | Purr Source: -.-    (:o.o<) |",
+            "; +----------------------> ^ <--+",
+            ";",
+        ]
+    )
+    code = "\n".join(";    |" + l for l in code.split("\n"))
+    return f"{header}\n{code}\n\n{ski}"

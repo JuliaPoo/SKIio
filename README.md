@@ -61,6 +61,7 @@ ATOM_OUT(ATOM_IN(I)) ; Main program reads and prints one byte of user input
 ### Macro Declaration
 
 You can declare other macros to be called elsewhere.
+Macro names cannot be a reserved keyword.
 
 ```lisp
 #<function name>
