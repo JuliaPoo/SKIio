@@ -1,11 +1,6 @@
-from ._skinode import (
-    SKInode,
-    NodeType,
-    _ATOMS,
-    SKInode_T,
-    get_all_free,
-    beta_eta_reduce,
-)
+from ._skinode import *
+from ._skinode import _ATOMS
+from ._exceptions import *
 
 from typing import Tuple
 
@@ -65,7 +60,7 @@ class Rule:
                 return False, {}
             return True, mapping
 
-        raise Exception("Unexpected NodeType!")
+        raise SKIioInternalException("Unexpected NodeType!")
 
     @staticmethod
     def _transform(rhs: SKInode_T, mapping: dict, _rctx: set = set()) -> SKInode_T:
@@ -74,7 +69,9 @@ class Rule:
             if rhs in _rctx or rhs in _ATOMS:
                 return rhs
             if rhs not in mapping:
-                raise Exception("Mapping invalid! Doesn't have key %s" % rhs)
+                raise SKIioInternalException(
+                    "Mapping invalid! Doesn't have key %s" % rhs
+                )
             return mapping[rhs]
 
         r1, r2 = rhs.childs
@@ -86,7 +83,7 @@ class Rule:
                 r2, mapping, _rctx
             )
         else:
-            raise Exception("Unexpected NodeType!")
+            raise SKIioInternalException("Unexpected NodeType!")
 
         return SKInode(rhs.node_type, childs)
 

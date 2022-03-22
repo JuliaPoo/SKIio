@@ -2,9 +2,9 @@
 ; | Echo Server in Purr! |
 ; +----------------------+
 ; Building:
-;   python -m skiio --compile echo-server.purr echo-server.ski
+;   python -m skiio compile -i echo-server.purr -o echo-server.ski
 ; Running:
-;   python -m skiio --run echo-server.ski
+;   python -m skiio run -i echo-server.ski
 
 ; Z Combinator
 #Zcom

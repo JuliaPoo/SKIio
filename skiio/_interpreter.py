@@ -1,4 +1,5 @@
 from ._skinode import *
+from ._exceptions import *
 from .utils import skibyte
 
 import sys
@@ -25,7 +26,7 @@ def _to_SKIEvalNode(expr: SKInode_T) -> _SKIEvalNode_T:
 
     if expr.node_type == NodeType.DECL:
         expr_str = str(expr)
-        raise Exception(
+        raise SKIioInterpreterException(
             "Expression "
             + (expr_str[:10] + "... " if len(expr_str) > 10 else " ")
             + "contains a declaration! Compile to SKI first with `compile_to_SKI`"
@@ -54,8 +55,9 @@ def _atom_i(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
 
     char = ord(sys.stdin.read(1))
     if char >= 256:
-        raise Exception(
-            f"`{chr(char)}` isn't supported! Only ord(char) < 256 is supported"
+        raise SKIioInterpreterException(
+            "Error running `i` combinator! "
+            + f"`{chr(char)}` isn't supported! Only ord(char) < 256 is supported"
         )
     return _to_SKIEvalNode(skibyte.SKI_byte[char])
 
@@ -63,7 +65,11 @@ def _atom_i(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
 def _atom_p(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
 
     if not isinstance(expr, int):
-        raise Exception(f"`{expr}` isn't an integer!")
+        raise SKIioInterpreterException(
+            "Error running `o` combinator! "
+            + "Attempted to print "
+            + f"`{expr}` which isn't an integer! "
+        )
 
     # print("-->", expr, "<--")
     sys.stdout.write(chr(expr))
@@ -78,6 +84,8 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
     ret: _SKIEvalStack_T = deque()
 
     def state() -> str:
+        if not dbg:
+            return ""
         return (
             _SKIEvalStack_str(ret)
             + " | "
@@ -101,7 +109,10 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
         # [., ret], n, [x, hold] => [ret], x(n), [hold]
         elif len(ret) > 0 and ret[0] == ".":
             if len(hold) < 1:
-                raise Exception("Corrupted program!")
+                raise SKIioInterpreterException(
+                    "Corrupted program! "
+                    + "Check if you are using the `i` and `o` combinators correctly."
+                )
             ret.popleft()
             curr = (hold.popleft(), curr)
 
@@ -174,10 +185,16 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
                 curr = n
 
         else:
-            raise Exception(f"Unexpected state! {state()}")
+            raise SKIioInterpreterException(
+                f"Unexpected state! "
+                + f"Check if you are using the `i` and `o` combinators correctly. {state()}"
+            )
 
     if hold:
-        raise Exception(f"Failed to fully execute! {state()}")
+        raise SKIioInterpreterException(
+            f"Failed to fully execute program! "
+            + f"Check if you are using the `i` and `o` combinators correctly. {state()}"
+        )
 
     for r in ret:
         curr = (curr, r)

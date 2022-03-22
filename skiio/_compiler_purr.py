@@ -1,14 +1,14 @@
+from ._skinode import SKInode, NodeType, SKInode_T, sub
+from .utils import skibyte
+from ._exceptions import *
+from ._compiler_ski import compile_node_to_ski
+
 from typing import Set, List, Dict, Optional, Tuple, cast
 from dataclasses import dataclass
 from enum import Enum, unique
 import re
 import string
 import warnings
-
-from ._skinode import SKInode, NodeType, SKInode_T, sub
-from .utils import skibyte
-from ._exceptions import *
-from ._compiler_ski import compile_node_to_ski
 
 warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}"
 
@@ -152,6 +152,7 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
 
     ret: Dict[Token, List[Token]] = {}
     acc: Optional[List[Token]] = None
+    defined: Set[str] = set()
     macro_name = None
 
     has_main = False
@@ -164,6 +165,13 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
         if tok.type == TokenType.MACRO_START:
             acc = []
             macro_name = tokens[ptr + 1]
+
+            if macro_name.tok in defined:
+                raise PurrCompileASTException(
+                    f"Macro redefinition `{macro_name}`",
+                    macro_name.line,
+                    macro_name.col
+                )
 
             if macro_name.type != TokenType.NAME:
                 if macro_name.type == TokenType.RESERVED_NAME:
@@ -204,6 +212,7 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
                 )
 
             ret[cast(Token, macro_name)] = acc
+            defined.add(cast(Token, macro_name).tok) 
             acc = None
             ptr += 1
             continue
@@ -252,14 +261,16 @@ def _get_balancing_bracket(
 
 
 def _build_macro(
-    tokens: List[Token], namespace: Optional[Dict[str, Token]] = None
+    curr_macro: Token, tokens: List[Token], namespace: Optional[Dict[str, Token]] = None
 ) -> Tuple[SKInode_T, Dict[str, List[Token]]]:
 
     if namespace is None:
         namespace = {}
 
     if len(tokens) == 0:
-        raise PurrCompileInternalException("Macro is empty!", -1, -1)
+        raise PurrCompileInternalException(
+            "Macro is empty!", curr_macro.line, curr_macro.col
+        )
 
     tok = tokens[0]
     if tok.type == TokenType.DECL_START:
@@ -294,14 +305,14 @@ def _build_macro(
 
         # [x:y] at y
         defi = _get_balancing_bracket(tokens, TokenType.DECL_START, TokenType.DECL_END)
-        definode, free = _build_macro(tokens[3:defi], namespace)
+        definode, free = _build_macro(curr_macro, tokens[3:defi], namespace)
         node: SKInode_T = SKInode(NodeType.DECL, (t1.tok, definode))
         idx = defi + 1  # Points to after the function
 
     elif tok.type == TokenType.CALL_START:
 
         argi = _get_balancing_bracket(tokens, TokenType.CALL_START, TokenType.CALL_END)
-        node, free = _build_macro(tokens[1:argi], namespace)
+        node, free = _build_macro(curr_macro, tokens[1:argi], namespace)
         idx = argi + 1  # Points to after function
 
     elif tok.type == TokenType.NAME or tok.type == TokenType.RESERVED_NAME:
@@ -365,7 +376,7 @@ def _build_macro(
         )
 
         ntokens = tokens[idx + 1 : argi]
-        nnode, nfree = _build_macro(ntokens, namespace)
+        nnode, nfree = _build_macro(curr_macro, ntokens, namespace)
 
         # Combine
         node = SKInode(NodeType.CALL, (node, nnode))
@@ -426,7 +437,7 @@ def compile_purr_to_node(code: str) -> SKInode_T:
     tokens = _tokenize(code)
     macros = _build_globals_dict(tokens)
 
-    macro_nodes = {k: _build_macro(m) for k, m in macros.items()}
+    macro_nodes = {k: _build_macro(k, m) for k, m in macros.items()}
     str_token_map = {t.tok: t for t in macro_nodes.keys()}
 
     adjacency = {}
@@ -476,10 +487,15 @@ def compile_purr_to_node(code: str) -> SKInode_T:
     return node, church_encodings
 
 
-def compile_purr_to_ski_str(code: str) -> str:
+def compile_purr_to_node_str(code: str) -> str:
+    n_code, _ = compile_purr_to_node(code)
+    return str(n_code)
+
+
+def compile_purr_to_ski_str(code: str, optimization: bool = True) -> str:
 
     node, church = compile_purr_to_node(code)
-    ski = compile_node_to_ski(node)
+    ski = compile_node_to_ski(node, optimization)
 
     # Replace church encodings with SKI equivalent
     for c in church:

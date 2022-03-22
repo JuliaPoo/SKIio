@@ -9,8 +9,8 @@
 _Purr_ is a minimalistic untyped functional language.
 It exists as a way to scalably write large lambda expressions.
 
-There is no intepreter for _Purr_ itself, it is to be
-compiled into _SKIio_ before being intepreted.
+There is no interpreter for _Purr_ itself, it is to be
+compiled into _SKIio_ before being interpreted.
 
 ### Comments
 
@@ -41,7 +41,7 @@ E.g. `[x:x](a)` is equivalent to `a`
 ### Main Function Declaration
 
 The _Main Function_ will be the "entrypoint" of the program.
-This function is the only function called by the intepreter.
+This function is the only function called by the interpreter.
 
 ```lisp
 !

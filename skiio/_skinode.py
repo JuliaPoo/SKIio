@@ -1,3 +1,5 @@
+from ._exceptions import *
+
 from dataclasses import dataclass
 from typing import Tuple, Literal, Union, List, Any, Type, Dict, cast
 from enum import Enum, unique
@@ -24,7 +26,7 @@ def gen_new_name(avoid: list = [], prefix: str = "") -> str:
         if n in avoid:
             continue
         return n
-    raise Exception("Ran out of variable names")
+    raise SKIioInternalException("Ran out of variable names")
 
 
 @unique
@@ -60,7 +62,7 @@ class SKInode:
             return str(A) + "(%s)" % SKInode._to_str(B, minimise)
 
         else:
-            raise Exception("Unexpected NodeType!")
+            raise SKIioInternalException("Unexpected NodeType!")
 
     def __str__(self) -> str:
         return self._to_str(self)
@@ -120,7 +122,7 @@ class SKInode:
 
             return True
 
-        raise Exception("Unexpected NodeType!")
+        raise SKIioInternalException("Unexpected NodeType!")
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, SKInode):
@@ -150,7 +152,9 @@ class SKInode:
             elif match := re.match("^" + _VALID_NAME_REGEX, code[idx:]):
                 if not match:
                     code_snippet = code[idx : min(len(code) - 1, idx + 10)]
-                    raise Exception("Invalid name `%s...`!" % (code_snippet))
+                    raise SKIioInternalException(
+                        "Invalid name `%s...`!" % (code_snippet)
+                    )
                 obj_str = match.group()
                 tokens.append(obj_str)
                 idx += len(obj_str)
@@ -175,7 +179,7 @@ class SKInode:
             if depth == 0:
                 return idx
             idx += 1
-        raise Exception("Unbalanced brackets `%s`" % start)
+        raise SKIioInternalException("Unbalanced brackets `%s`" % start)
 
     @staticmethod
     def _to_node(tokens: List[str]) -> SKInode_T:
@@ -185,7 +189,7 @@ class SKInode:
         t = tokens[0]
         if len(tokens) == 1:
             if not self_T._is_valid_name(t):
-                raise Exception("Invalid name %s" % t)
+                raise SKIioInternalException("Invalid name %s" % t)
             return t
 
         if t == "(":
@@ -194,22 +198,22 @@ class SKInode:
 
         elif t == "[":
             if len(tokens) < 5:
-                raise Exception("Incomplete declaration!")
+                raise SKIioInternalException("Incomplete declaration!")
             t1, t2 = tokens[1], tokens[2]
             if not self_T._is_valid_name(t1):
-                raise Exception("Invalid argname %s" % t1)
+                raise SKIioInternalException("Invalid argname %s" % t1)
             if t2 != ":":
-                raise Exception("Expected `:`, not %s" % t2)
+                raise SKIioInternalException("Expected `:`, not %s" % t2)
 
             idx = self_T._get_end_bracket(tokens, 0)
             node = SKInode(NodeType.DECL, (t1, self_T._to_node(tokens[3:idx])))
 
         else:
             if not self_T._is_valid_name(t):
-                raise Exception("Invalid name %s" % t)
+                raise SKIioInternalException("Invalid name %s" % t)
             t1 = tokens[1]
             if t1 != "(":
-                raise Exception("Expected `(`, not %s" % t1)
+                raise SKIioInternalException("Expected `(`, not %s" % t1)
 
             idx = self_T._get_end_bracket(tokens, 1)
             node = SKInode(NodeType.CALL, (t, self_T._to_node(tokens[2:idx])))
@@ -218,7 +222,7 @@ class SKInode:
             tmp = idx
             t = tokens[tmp + 1]
             if t != "(":
-                raise Exception("Expected `(`, not %s" % t)
+                raise SKIioInternalException("Expected `(`, not %s" % t)
 
             idx = self_T._get_end_bracket(tokens, tmp + 1)
             node = SKInode(
@@ -248,7 +252,7 @@ def is_free(expr: SKInode_T, varname: str) -> bool:
         ret = is_free(c1, varname)
         ret |= is_free(c2, varname)
         return ret
-    raise Exception("Unexpected NodeType!")
+    raise SKIioInternalException("Unexpected NodeType!")
 
 
 def get_all_free(expr: SKInode_T, _ctx: set = set()) -> set:
@@ -267,7 +271,7 @@ def get_all_free(expr: SKInode_T, _ctx: set = set()) -> set:
         ret1 = get_all_free(c1, _ctx)
         ret2 = get_all_free(c2, _ctx)
         return ret1 | ret2
-    raise Exception("Unexpected NodeType!")
+    raise SKIioInternalException("Unexpected NodeType!")
 
 
 def _sub(
@@ -299,7 +303,7 @@ def _sub(
         c2 = _sub(c2, varname, repl, _repl_free, _ctx)
         return SKInode(t, (c1, c2))
 
-    raise Exception("Unexpected NodeType!")
+    raise SKIioInternalException("Unexpected NodeType!")
 
 
 def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: set = set()) -> SKInode_T:
@@ -318,7 +322,9 @@ def beta_eta_reduce(
 
     if _depth == max_depth:
         if raise_error:
-            raise Exception("`beta_eta_reduce` Max depth `%d` reached" % max_depth)
+            raise SKIioInternalException(
+                "`beta_eta_reduce` Max depth `%d` reached" % max_depth
+            )
         return expr
     _depth += 1
 
@@ -367,4 +373,4 @@ def beta_eta_reduce(
         c2 = B(c2, _ctx, _depth)
         return N(t, (c1, c2))
 
-    raise Exception("Unexpected NodeType!")
+    raise SKIioInternalException("Unexpected NodeType!")

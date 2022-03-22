@@ -1,5 +1,6 @@
 from ._skinode import SKInode, NodeType, SKInode_T, is_free
 from ._rule import Rule
+from ._exceptions import *
 
 
 from typing import List, cast
@@ -50,7 +51,7 @@ def _optimise(expr: SKInode_T, optimisation: bool = True) -> SKInode_T:
             _optimise(c2, optimisation),
         )
     else:
-        raise Exception("Declarations aren't supported in `optimise`")
+        raise SKIioInternalException("Declarations aren't supported in `optimise`")
 
     new_expr = SKInode(t, (c1, c2))
 
@@ -108,6 +109,6 @@ def compile_node_to_ski(expr: SKInode_T, optimisation: bool = True) -> SKInode_T
     return expr
 
 
-def compile_node_to_SKI_str(expr_str: str, optimisation: bool = True) -> str:
+def compile_node_to_ski_str(expr_str: str, optimisation: bool = True) -> str:
     expr = SKInode.from_str(expr_str)
     return str(compile_node_to_ski(expr, optimisation))
