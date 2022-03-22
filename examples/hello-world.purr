@@ -2,7 +2,7 @@
 ; | Hello World in Purr! |
 ; +----------------------+
 ; Building:
-;   python -m skiio compile -i hello-world.purr -o hello-world.ski
+;   python -m skiio compile -i hello-world.purr -o hello-world
 ; Running:
 ;   python -m skiio run -i hello-world.ski
 

@@ -7,7 +7,7 @@
 ;    |; | Echo Server in Purr! |
 ;    |; +----------------------+
 ;    |; Building:
-;    |;   python -m skiio compile -i echo-server.purr -o echo-server.ski
+;    |;   python -m skiio compile -i echo-server.purr -o echo-server
 ;    |; Running:
 ;    |;   python -m skiio run -i echo-server.ski
 ;    |

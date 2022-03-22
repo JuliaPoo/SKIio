@@ -10,10 +10,10 @@ import re
 import string
 import warnings
 
-warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}"
+warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}\n"
 
 _VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
-_VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9]{2})(?:[^a-zA-Z0-9]|$)")
+_VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9a-f]{2})(?:[^a-zA-Z0-9]|$)")
 
 _RESERVED_NAMES: Dict[str, str] = {
     "ATOM_OUT": "o",

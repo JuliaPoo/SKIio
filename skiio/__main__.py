@@ -110,8 +110,9 @@ def main(args: argparse.Namespace) -> int:
             raise SKIioCLIException(f"Input file `infile={i}` does not exist!")
         i_code = open(i).read()
 
+        print(f"---- PROGRAM START ----")
         try:
-            interpret_SKI_from_str(i_code, dbg)
+            ret = interpret_SKI_from_str(i_code, dbg)
         except SKIioInterpreterException as err:
             print(err)
             return 1
@@ -122,7 +123,8 @@ def main(args: argparse.Namespace) -> int:
         except KeyboardInterrupt as err:
             print("[x] Program terminated by user!")
             return 1
-
+        print(f"\n----- PROGRAM END -----")
+        print(f"\n[*] Return: {ret}")
         return 0
 
     raise SKIioCLIInternalException(f"Unknown action {action}")

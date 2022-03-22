@@ -1,0 +1,164 @@
+; +--------------------+
+; | Fizz Buzz in Purr! |
+; +--------------------+
+; Building:
+;   python -m skiio compile -i fizzbuzz.purr -o fizzbuzz.ski
+; Running:
+;   python -m skiio run -i fizzbuzz.ski
+
+; ---------
+;   Utils
+; ---------
+
+; Z combinator
+#zcom
+[f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
+~
+
+; -------------
+;   Booleans
+; -------------
+
+#true   ; Represents boolean true
+[x:[y:x]]
+~
+
+#false   ; Represents boolean false
+[x:[y:y]]
+~
+
+; ------------
+;   Naturals
+; ------------
+
+; inc(a) computes a+1
+#inc
+[n:[f:[x:f(n(f)(x))]]]
+~
+
+; dec(a) computes a-1
+#dec
+[n:[f:[x:n([g:[y:y(g(f))]])([y:x])([y:y])]]]
+~
+
+; add(a)(b) computes a+b
+#add
+[a:[b:b(inc)(a)]]
+~
+
+#sub    ; sub(a)(b) computes a-b
+[a:[b:b(dec)(a)]]
+~
+
+; mul(a)(b) computes a*b
+#mul
+[a:[b:b([y:add(y)(a)])(.00)]]
+~
+
+; is_zero(n) returns true if n is 0
+#is_zero
+[n:n([y:false])(true)]
+~
+
+; less(a)(b) returns true if a<b
+#less
+[a:[b:is_zero(sub(inc(a))(b))]]
+~
+
+; less_equal(a)(b) returns true if a<=b
+#less_equal
+[a:[b:is_zero(sub(a)(b))]]
+~
+
+; greater_equal(a)(b) returns true if a>=b
+#greater_equal
+[a:[b:is_zero(sub(b)(a))]]
+~
+
+; equal(a,b) returns true if a==b
+#equal
+[a:[b:less_equal(a)(b)(greater_equal(a)(b))(false)]]
+~
+
+; mod(a,b) computes a%b
+#mod
+zcom([f:
+    [a:[b:
+        less(a)(b)
+            (a) ; Return a
+            (f(sub(a)(b))(b)) ; Return f(a-b, b)
+    ]]
+])
+~
+
+; quo(a,b) computes a//b
+#quo
+zcom([f:
+    [ret:[a:[b:
+        less(a)(b)
+            (ret)
+            (f(inc(ret))(sub(a)(b))(b))
+    ]]]
+])(.00)
+~
+
+; ------------
+;   Program
+; ------------
+
+; Prints `fizz`
+#print_str_fizz
+[o:
+    o(.f)(o(.i))(o(.z))(o(.z))
+](ATOM_OUT)
+~
+
+; Prints `buzz`
+#print_str_buzz
+[o:
+    o(.b)(o(.u))(o(.z))(o(.z))
+](ATOM_OUT)
+~
+
+; Prints integer
+#print_int
+zcom([f:
+    [n:
+        is_zero(n)
+            ([x:x]) ; Return I
+            (
+                f(quo(n)(.0a))(ATOM_OUT(add(mod(n)(.0a))(.0)))
+            )
+    ]
+])
+~
+
+; Deals with fizzbuzz for one int
+#fizzbuzz_int
+[n:
+    print_int(n)(ATOM_OUT(.3a)(ATOM_OUT(.20)))(
+        (
+            is_zero(mod(n)(.03))
+                (print_str_fizz) ; Print fizz
+                ([x:x]) ; Do nothing
+        )(
+            is_zero(mod(n)(.05))
+                (print_str_buzz) ; Print buzz
+                ([x:x]) ; Do nothing
+        )(
+            ATOM_OUT(.0a)
+        )
+    )
+]
+~
+
+; Main program
+!
+zcom([f:
+    [n:
+        less(.64)(n)
+            ([x:x]) ; Return I
+            (fizzbuzz_int(n)(f(inc(n))))
+    ]
+])(.01)
+~
