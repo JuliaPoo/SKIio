@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(
     description="SKIio interpreter and compiler, command-line interface",
 )
 
-subparsers = parser.add_subparsers(dest="action", help="Action")
+subparsers = parser.add_subparsers(dest="action", help="Action", required=True)
 
 compile_args = subparsers.add_parser("compile", help="Compile Purr code", aliases=["c"])
 compile_args.add_argument(
@@ -131,7 +131,7 @@ def main(args: argparse.Namespace) -> int:
             print("[x] Program terminated by user!")
             return 1
         print(f"\n----- PROGRAM END -----")
-        print(f"\n[*] Return: {ret}")
+        print(f"\n[*] Return: {ret if len(ret) < 10 else ret[:10] + '...'}")
         return 0
 
     raise SKIioCLIInternalException(f"Unknown action {action}")
