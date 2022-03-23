@@ -3,17 +3,22 @@ from .utils import skibyte
 from ._exceptions import *
 from ._compiler_ski import compile_node_to_ski
 
-from typing import Set, List, Dict, Optional, Tuple, cast
+from typing import Set, List, Dict, Optional, Tuple, Pattern, Any, cast
 from dataclasses import dataclass
 from enum import Enum, unique
 import re
 import string
 import warnings
 
-warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}\n"
 
-_VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
-_VALID_CHURCH_INT: re.Pattern = re.compile(
+def _formatwarning(msg: str, *args: Any, **kwargs: Any):
+    return f"[-] PurrWarning: {msg}\n"
+
+
+warnings.formatwarning = _formatwarning
+
+_VALID_NAME_REGEX: Pattern[str] = re.compile(r"[a-zA-Z0-9_]+")
+_VALID_CHURCH_INT: Pattern[str] = re.compile(
     r"([a-zA-Z0-9]|[0-9a-f]{2})(?:[^a-zA-Z0-9]|$)"
 )
 
@@ -69,7 +74,7 @@ class Token:
 def _tokenize(code: str) -> List[Token]:
 
     codelines = code.split("\n")
-    tokens = []
+    tokens = cast(List[Token], [])
 
     for lno, line in enumerate(codelines):
 
@@ -402,18 +407,18 @@ def _topological_sort_macros(
     adjacency: Dict[Token, List[Token]],
     start: Token,
     _marked: Optional[Dict[Token, bool]] = None,
-    _childs: Optional[List[Token]] = None,
-    _acc: Optional[Tuple[Token]] = None,
+    _childs: Optional[Tuple[Token]] = None,
+    _acc: Optional[List[Token]] = None,
 ) -> List[Token]:
 
     if _marked is None:
         _marked = {}
     if _acc is None:
-        _acc = []
+        _acc = cast(List[Token], [])
     if _childs is None:
-        _childs = ()
+        _childs = cast(Tuple[Token], ())
 
-    _childs = (*_childs, start)
+    _childs = tuple((*_childs, start))
     if start in _marked:
 
         suc = _marked[start]
@@ -445,7 +450,7 @@ def compile_purr_to_node(code: str) -> Tuple[SKInode_T, Set[str]]:
     adjacency = {}
     church_encodings: Set[str] = set()
     for k, (_, f) in macro_nodes.items():
-        adjk = []
+        adjk = cast(List[Token], [])
         for t in f.keys():
 
             # A free variable isn't one of the defined macros
@@ -506,11 +511,11 @@ def compile_purr_to_ski_str(code: str, optimization: bool = True) -> str:
 
     header = "\n".join(
         [
-            "; +-----------------------------+",
-            "; | Compiled from Purr   /\_/\  |",
-            "; | Purr Source: -.-    (:o.o<) |",
-            "; +----------------------> ^ <--+",
-            ";",
+            r"; +-----------------------------+",
+            r"; | Compiled from Purr   /\_/\  |",
+            r"; | Purr Source: -.-    (:o.o<) |",
+            r"; +----------------------> ^ <--+",
+            r";",
         ]
     )
     code = "\n".join(";    |" + l for l in code.split("\n"))

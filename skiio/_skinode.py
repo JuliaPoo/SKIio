@@ -1,12 +1,12 @@
 from ._exceptions import *
 
 from dataclasses import dataclass
-from typing import Tuple, Literal, Union, List, Any, Type, Dict, cast
+from typing import Tuple, Literal, Union, List, Any, Dict, Set, Optional, Type, cast
 from enum import Enum, unique
 import string
 import re
 
-_ATOMS: Dict[str, str] = {
+ATOMS: Dict[str, str] = {
     "S": "[x:[y:[z:x(z)(y(z))]]]",
     "K": "[x:[y:x]]",
     "I": "[x:x]",
@@ -19,7 +19,7 @@ _VALID_NAME_REGEX: str = r"[a-zA-Z0-9_\.]+"
 SKInode_T = Union["SKInode", str]
 
 
-def gen_new_name(avoid: list = [], prefix: str = "") -> str:
+def gen_new_name(avoid: List[str] = [], prefix: str = "") -> str:
     names = string.ascii_lowercase + string.ascii_uppercase
     for n in names:
         n = prefix + n
@@ -53,13 +53,13 @@ class SKInode:
             return "[%s:%s]" % (argname, SKInode._to_str(defi, minimise))
 
         elif ntype == NodeType.CALL:
-            A, B = node.childs
-            A = SKInode._to_str(A, minimise)
+            a, b = node.childs
+            a = SKInode._to_str(a, minimise)
             if minimise:
-                return str(A) + (
-                    B if type(B) is str else "(%s)" % SKInode._to_str(B, minimise)
+                return str(a) + (
+                    b if isinstance(b, str) else "(%s)" % SKInode._to_str(b, minimise)
                 )
-            return str(A) + "(%s)" % SKInode._to_str(B, minimise)
+            return str(a) + "(%s)" % SKInode._to_str(b, minimise)
 
         else:
             raise SKIioInternalException("Unexpected NodeType!")
@@ -71,7 +71,7 @@ class SKInode:
         return hash(str(self))
 
     @staticmethod
-    def _eq(node1: SKInode_T, node2: SKInode_T, ctx1: dict, ctx2: dict) -> bool:
+    def _eq(node1: SKInode_T, node2: SKInode_T, ctx1: Dict[str, int], ctx2: Dict[str, int]) -> bool:
 
         if type(node1) is not type(node2):
             return False
@@ -107,8 +107,8 @@ class SKInode:
 
             # Add free variables to context
             ctx1, ctx2 = ctx1.copy(), ctx2.copy()
-            ctx1[arg1] = max(ctx1.values()) + 1
-            ctx2[arg2] = max(ctx2.values()) + 1
+            ctx1[cast(str, arg1)] = max(ctx1.values()) + 1
+            ctx2[cast(str, arg2)] = max(ctx2.values()) + 1
 
             return SKInode._eq(defi1, defi2, ctx1, ctx2)
 
@@ -127,7 +127,7 @@ class SKInode:
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, SKInode):
             return False
-        return self._eq(self, other, {0: 0}, {0: 0})
+        return self._eq(self, other, {":": 0}, {":": 0})
 
     def __repr__(self) -> str:
         return str(self)
@@ -139,7 +139,7 @@ class SKInode:
     @staticmethod
     def _tokenize(code: str) -> List[str]:
 
-        tokens = []
+        tokens = cast(List[str], [])
         idx = 0
         while True:
 
@@ -255,17 +255,20 @@ def is_free(expr: SKInode_T, varname: str) -> bool:
     raise SKIioInternalException("Unexpected NodeType!")
 
 
-def get_all_free(expr: SKInode_T, _ctx: set = set()) -> set:
+def get_all_free(expr: SKInode_T, _ctx: Optional[Set[str]] = None) -> Set[str]:
 
+    if _ctx is None:
+        _ctx = cast(Set[str], set())
+    
     if isinstance(expr, str):
         if expr in _ctx:
-            return set()
+            return cast(Set[str], set())
         return set([expr])
 
     t = expr.node_type
     c1, c2 = expr.childs
     if t == NodeType.DECL:
-        (_ctx := _ctx.copy()).add(c1)
+        (_ctx := _ctx.copy()).add(cast(str, c1))
         return get_all_free(c2, _ctx)
     if t == NodeType.CALL:
         ret1 = get_all_free(c1, _ctx)
@@ -275,9 +278,12 @@ def get_all_free(expr: SKInode_T, _ctx: set = set()) -> set:
 
 
 def _sub(
-    expr: SKInode_T, varname: str, repl: SKInode_T, _repl_free: list, _ctx: set = set()
+    expr: SKInode_T, varname: str, repl: SKInode_T, _repl_free: List[str], _ctx: Optional[Set[str]] = None
 ) -> SKInode_T:
 
+    if _ctx is None:
+        _ctx = cast(Set[str], set())
+    
     if isinstance(expr, str):
         if expr == varname:
             return repl
@@ -287,13 +293,14 @@ def _sub(
     c1, c2 = expr.childs
 
     if t == NodeType.DECL:
+        c1 = cast(str, c1)
         (_ctx := _ctx.copy()).add(c1)
         if c1 == varname:
             return expr
         if c1 in _repl_free:
             new_c1 = gen_new_name(avoid=_repl_free + list(_ctx))
             (_ctx := _ctx.copy()).add(new_c1)
-            c2 = sub(c2, cast(str, c1), new_c1, _ctx)
+            c2 = sub(c2, c1, new_c1, _ctx)
             c1 = new_c1
         c2 = _sub(c2, varname, repl, _repl_free, _ctx)
         return SKInode(t, (c1, c2))
@@ -306,7 +313,10 @@ def _sub(
     raise SKIioInternalException("Unexpected NodeType!")
 
 
-def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: set = set()) -> SKInode_T:
+def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: Optional[Set[str]] = None) -> SKInode_T:
+
+    if ctx is None:
+        ctx = cast(Set[str], set())
 
     repl_free = list(get_all_free(repl))
     return _sub(expr, varname, repl, repl_free, ctx)
@@ -315,10 +325,13 @@ def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: set = set()) -> SKI
 def beta_eta_reduce(
     expr: SKInode_T,
     max_depth: int = 500,
-    raise_error=True,
-    _ctx: set = set(),
+    raise_error: bool =True,
+    _ctx: Optional[Set[str]] = None,
     _depth: int = 0,
 ) -> SKInode_T:
+
+    if _ctx is None:
+        _ctx = cast(Set[str], set())
 
     if _depth == max_depth:
         if raise_error:
@@ -329,12 +342,12 @@ def beta_eta_reduce(
     _depth += 1
 
     if isinstance(expr, str):
-        if expr in _ATOMS and expr not in _ctx:
-            return SKInode.from_str(_ATOMS[expr])
+        if expr in ATOMS and expr not in _ctx:
+            return SKInode.from_str(ATOMS[expr])
         return expr
 
     # Shortforms
-    def B(e, _c, _d):
+    def B(e:SKInode_T, _c:Set[str], _d:int):
         return beta_eta_reduce(e, max_depth, raise_error, _c, _d)
 
     N, C, D = SKInode, NodeType.CALL, NodeType.DECL
@@ -347,12 +360,12 @@ def beta_eta_reduce(
         c2 = B(c2, _ctx, _depth)
         if isinstance(c1, N) and c1.node_type == D:
             n, fn = c1.childs
-            (_ctx := _ctx.copy()).add(n)
+            (_ctx := _ctx.copy()).add(cast(str, n))
             return B(sub(fn, cast(str, n), c2, _ctx), _ctx, _depth)
 
         if isinstance(c1, str):
             if c1 in "SKI" and c1 not in _ctx:
-                c1 = SKInode.from_str(_ATOMS[c1])
+                c1 = SKInode.from_str(ATOMS[c1])
                 return B(N(t, (c1, c2)), _ctx, _depth)
             return N(t, (c1, c2))
 
@@ -364,9 +377,11 @@ def beta_eta_reduce(
 
     if t == D:
 
+        c1 = cast(str, c1)
+
         if isinstance(c2, N) and c2.node_type == C:
             d1, d2 = c2.childs
-            if d2 == c1 and not is_free(d1, cast(str, c1)):
+            if d2 == c1 and not is_free(d1, c1):
                 return B(d1, _ctx, _depth)
 
         (_ctx := _ctx.copy()).add(c1)

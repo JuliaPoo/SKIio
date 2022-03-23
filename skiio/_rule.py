@@ -1,8 +1,7 @@
 from ._skinode import *
-from ._skinode import _ATOMS
 from ._exceptions import *
 
-from typing import Tuple
+from typing import Tuple, Dict, Set
 
 
 class Rule:
@@ -18,8 +17,12 @@ class Rule:
 
     @staticmethod
     def _check(
-        lhs: SKInode_T, expr: SKInode_T, mapping: dict, _lctx: dict, _ectx: dict
-    ) -> Tuple[bool, dict]:
+        lhs: SKInode_T,
+        expr: SKInode_T,
+        mapping: Dict[str, SKInode_T],
+        _lctx: Dict[str, int],
+        _ectx: Dict[SKInode_T, int],
+    ) -> Tuple[bool, Dict[str, SKInode_T]]:
 
         # TODO: Make this only for NodeType.CALL
 
@@ -28,7 +31,7 @@ class Rule:
                 if expr not in _ectx:
                     return False, {}
                 return _lctx[lhs] == _ectx[expr], mapping
-            if lhs in _ATOMS:
+            if lhs in ATOMS:
                 return lhs == expr, mapping
             if lhs in mapping:
                 return mapping[lhs] == expr, mapping
@@ -47,8 +50,8 @@ class Rule:
         e1, e2 = expr.childs
 
         if lhs_t == NodeType.DECL:
-            (_lctx := _lctx.copy())[l1] = max(_lctx.values()) + 1
-            (_ectx := _ectx.copy())[e1] = max(_ectx.values()) + 1
+            (_lctx := _lctx.copy())[cast(str, l1)] = max(_lctx.values()) + 1
+            (_ectx := _ectx.copy())[cast(str, e1)] = max(_ectx.values()) + 1
             return Rule._check(l2, e2, mapping, _lctx, _ectx)
 
         elif lhs_t == NodeType.CALL:
@@ -63,10 +66,12 @@ class Rule:
         raise SKIioInternalException("Unexpected NodeType!")
 
     @staticmethod
-    def _transform(rhs: SKInode_T, mapping: dict, _rctx: set = set()) -> SKInode_T:
+    def _transform(
+        rhs: SKInode_T, mapping: Dict[str, SKInode_T], _rctx: Set[str] = set()
+    ) -> SKInode_T:
 
         if isinstance(rhs, str):
-            if rhs in _rctx or rhs in _ATOMS:
+            if rhs in _rctx or rhs in ATOMS:
                 return rhs
             if rhs not in mapping:
                 raise SKIioInternalException(
@@ -76,7 +81,7 @@ class Rule:
 
         r1, r2 = rhs.childs
         if rhs.node_type == NodeType.DECL:
-            (_rctx := _rctx.copy()).add(r1)
+            (_rctx := _rctx.copy()).add(cast(str, r1))
             childs = r1, Rule._transform(r2, mapping, _rctx)
         elif rhs.node_type == NodeType.CALL:
             childs = Rule._transform(r1, mapping, _rctx), Rule._transform(
@@ -87,8 +92,8 @@ class Rule:
 
         return SKInode(rhs.node_type, childs)
 
-    def check(self, expr: SKInode_T) -> Tuple[bool, dict]:
-        succ, mapping = self._check(self.lhs, expr, {}, {0: 0}, {0: 0})
+    def check(self, expr: SKInode_T) -> Tuple[bool, Dict[str, SKInode_T]]:
+        succ, mapping = self._check(self.lhs, expr, {}, {":": 0}, {":": 0})
         if not succ:
             mapping = {}
         frees = get_all_free(self.rhs)
@@ -97,7 +102,7 @@ class Rule:
                 mapping.pop(name)
         return succ, mapping
 
-    def transform(self, mapping: dict) -> SKInode_T:
+    def transform(self, mapping: Dict[str, SKInode_T]) -> SKInode_T:
         return self._transform(self.rhs, mapping)
 
     def apply(self, expr: SKInode_T) -> Tuple[bool, SKInode_T]:
@@ -108,5 +113,4 @@ class Rule:
 
     def verify(self) -> bool:
         # If returns False, not guaranteed to be false
-        B = beta_eta_reduce
-        return B(self.rhs) == B(self.lhs)
+        return beta_eta_reduce(self.rhs) == beta_eta_reduce(self.lhs)
