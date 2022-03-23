@@ -31,19 +31,22 @@ compile_args.add_argument(
     "-i", "--infile", help="Input filename with Purr code", type=str, required=True
 )
 compile_args.add_argument(
-    "-o", "--outfile",
+    "-o",
+    "--outfile",
     help="Output filename (without extension)",
     type=str,
     required=True,
 )
 compile_args.add_argument(
-    "-opt", "--optimize",
+    "-opt",
+    "--optimize",
     help="Toggle off optimization (default: %(default)s)",
     type=bool,
     default=True,
 )
 compile_args.add_argument(
-    "-m", "--intermediate",
+    "-m",
+    "--intermediate",
     help="Output intermediate representation (default: %(default)s)",
     type=bool,
     default=False,
@@ -54,19 +57,22 @@ run_args.add_argument(
     "-i", "--infile", help="Input filename with SKIio code", type=str, required=True
 )
 run_args.add_argument(
-    "-v", "--verbose",
+    "-v",
+    "--verbose",
     help="Prints debugging info (default: %(default)s)",
-    action='store_true',
+    action="store_true",
     default=None,
 )
 run_args.add_argument(
-    "-vv", "--veryverbose",
+    "-vv",
+    "--veryverbose",
     help="Steps through execution (default: %(default)s)",
-    action='store_true',
+    action="store_true",
     default=None,
 )
 
 args = parser.parse_args()
+
 
 def main(args: argparse.Namespace) -> int:
 

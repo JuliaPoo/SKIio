@@ -84,7 +84,8 @@ def _atom_p(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
 
 def interpret_SKI(expr: SKInode_T, dbg: int = 0) -> str:
 
-    global _input_buffer; _input_buffer = b""
+    global _input_buffer
+    _input_buffer = b""
 
     curr: _SKIEvalNode_T = _to_SKIEvalNode(expr)
     hold: _SKIEvalStack_T = deque()

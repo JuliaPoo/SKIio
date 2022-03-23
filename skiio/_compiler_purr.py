@@ -13,7 +13,9 @@ import warnings
 warnings.formatwarning = lambda msg, *args, **kwargs: f"[-] PurrWarning: {msg}\n"
 
 _VALID_NAME_REGEX: re.Pattern = re.compile(r"[a-zA-Z0-9_]+")
-_VALID_CHURCH_INT: re.Pattern = re.compile(r"([a-zA-Z0-9]|[0-9a-f]{2})(?:[^a-zA-Z0-9]|$)")
+_VALID_CHURCH_INT: re.Pattern = re.compile(
+    r"([a-zA-Z0-9]|[0-9a-f]{2})(?:[^a-zA-Z0-9]|$)"
+)
 
 _RESERVED_NAMES: Dict[str, str] = {
     "ATOM_OUT": "o",
@@ -170,7 +172,7 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
                 raise PurrCompileASTException(
                     f"Macro redefinition `{macro_name}`",
                     macro_name.line,
-                    macro_name.col
+                    macro_name.col,
                 )
 
             if macro_name.type != TokenType.NAME:
@@ -212,7 +214,7 @@ def _build_globals_dict(tokens: List[Token]) -> Dict[Token, List[Token]]:
                 )
 
             ret[cast(Token, macro_name)] = acc
-            defined.add(cast(Token, macro_name).tok) 
+            defined.add(cast(Token, macro_name).tok)
             acc = None
             ptr += 1
             continue

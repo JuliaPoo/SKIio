@@ -9,6 +9,9 @@ license = "MIT"
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
+pytest = "*" # Maybe I'll eventually write tests
+black = "*"
+mypy = "*" # Currently it just hangs
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
