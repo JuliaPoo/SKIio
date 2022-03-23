@@ -71,7 +71,9 @@ class SKInode:
         return hash(str(self))
 
     @staticmethod
-    def _eq(node1: SKInode_T, node2: SKInode_T, ctx1: Dict[str, int], ctx2: Dict[str, int]) -> bool:
+    def _eq(
+        node1: SKInode_T, node2: SKInode_T, ctx1: Dict[str, int], ctx2: Dict[str, int]
+    ) -> bool:
 
         if type(node1) is not type(node2):
             return False
@@ -259,7 +261,7 @@ def get_all_free(expr: SKInode_T, _ctx: Optional[Set[str]] = None) -> Set[str]:
 
     if _ctx is None:
         _ctx = cast(Set[str], set())
-    
+
     if isinstance(expr, str):
         if expr in _ctx:
             return cast(Set[str], set())
@@ -278,12 +280,16 @@ def get_all_free(expr: SKInode_T, _ctx: Optional[Set[str]] = None) -> Set[str]:
 
 
 def _sub(
-    expr: SKInode_T, varname: str, repl: SKInode_T, _repl_free: List[str], _ctx: Optional[Set[str]] = None
+    expr: SKInode_T,
+    varname: str,
+    repl: SKInode_T,
+    _repl_free: List[str],
+    _ctx: Optional[Set[str]] = None,
 ) -> SKInode_T:
 
     if _ctx is None:
         _ctx = cast(Set[str], set())
-    
+
     if isinstance(expr, str):
         if expr == varname:
             return repl
@@ -313,7 +319,9 @@ def _sub(
     raise SKIioInternalException("Unexpected NodeType!")
 
 
-def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: Optional[Set[str]] = None) -> SKInode_T:
+def sub(
+    expr: SKInode_T, varname: str, repl: SKInode_T, ctx: Optional[Set[str]] = None
+) -> SKInode_T:
 
     if ctx is None:
         ctx = cast(Set[str], set())
@@ -325,7 +333,7 @@ def sub(expr: SKInode_T, varname: str, repl: SKInode_T, ctx: Optional[Set[str]] 
 def beta_eta_reduce(
     expr: SKInode_T,
     max_depth: int = 500,
-    raise_error: bool =True,
+    raise_error: bool = True,
     _ctx: Optional[Set[str]] = None,
     _depth: int = 0,
 ) -> SKInode_T:
@@ -347,7 +355,7 @@ def beta_eta_reduce(
         return expr
 
     # Shortforms
-    def B(e:SKInode_T, _c:Set[str], _d:int):
+    def B(e: SKInode_T, _c: Set[str], _d: int):
         return beta_eta_reduce(e, max_depth, raise_error, _c, _d)
 
     N, C, D = SKInode, NodeType.CALL, NodeType.DECL

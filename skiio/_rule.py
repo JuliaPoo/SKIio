@@ -67,8 +67,11 @@ class Rule:
 
     @staticmethod
     def _transform(
-        rhs: SKInode_T, mapping: Dict[str, SKInode_T], _rctx: Set[str] = set()
+        rhs: SKInode_T, mapping: Dict[str, SKInode_T], _rctx: Optional[Set[str]] = None
     ) -> SKInode_T:
+
+        if _rctx is None:
+            _rctx = cast(Set[str], set())
 
         if isinstance(rhs, str):
             if rhs in _rctx or rhs in ATOMS:

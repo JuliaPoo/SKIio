@@ -66,10 +66,10 @@ def _compile_node_to_ski(expr: SKInode_T, optimisation: bool = True) -> SKInode_
         return expr
 
     # Shortforms
-    def O(e:SKInode_T):
+    def O(e: SKInode_T):
         return _optimise(e, optimisation)
 
-    def T(e:SKInode_T):
+    def T(e: SKInode_T):
         return O(_compile_node_to_ski(e, optimisation))
 
     C, D, N = NodeType.CALL, NodeType.DECL, SKInode
