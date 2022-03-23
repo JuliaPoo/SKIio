@@ -51,9 +51,14 @@ def _SKIEvalStack_str(stack: _SKIEvalStack_T) -> str:
     return ", ".join(map(_SKIEvalNode_str, stack))
 
 
-def _atom_i(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
+def _atom_i(index: int) -> _SKIEvalNode_T:
 
-    char = ord(sys.stdin.read(1))
+    global _input_buffer
+
+    while index >= len(_input_buffer):
+        _input_buffer += sys.stdin.read(1).encode()
+    char = _input_buffer[index]
+
     if char >= 256:
         raise SKIioInterpreterException(
             "Error running `i` combinator! "
@@ -77,14 +82,16 @@ def _atom_p(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
     return "I"
 
 
-def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
+def interpret_SKI(expr: SKInode_T, dbg: int = 0) -> str:
+
+    global _input_buffer; _input_buffer = b""
 
     curr: _SKIEvalNode_T = _to_SKIEvalNode(expr)
     hold: _SKIEvalStack_T = deque()
     ret: _SKIEvalStack_T = deque()
 
     def state() -> str:
-        if not dbg:
+        if dbg < 2:
             return ""
         return (
             _SKIEvalStack_str(ret)
@@ -96,8 +103,8 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
 
     while True:
 
-        if dbg:
-            print(">>", state())
+        if dbg >= 2:
+            print("[?]", state())
             input()
 
         # ret, a(b) => [b, ret], a
@@ -141,12 +148,22 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
             c = ret.popleft()
             ret.extendleft([(b, c), c])
 
+        # i(a) => i(a(u)(0))
+        # [a, ret], i, [hold] => [., ret], a(u)(0), [i, hold]
         # i(a) => n
         # [a, ret], i => [ret], n
         elif curr == "i":
             if len(ret) < 1:
                 break
-            curr = _atom_i(ret.popleft())
+            a = ret.popleft()
+            if isinstance(a, int):
+                if dbg > 0:
+                    print(f"[?] Requesting input at index {hex(a)}")
+                curr = _atom_i(a)
+            else:
+                curr = ((a, "u"), 0)
+                ret.appendleft(".")
+                hold.appendleft("i")
 
         # o(a) => p(a(u)(0))
         # [a, ret], o => [a(u)(0), ret], p
@@ -179,6 +196,8 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
             n = ret.popleft()
             if isinstance(n, int):
                 curr = _atom_p(n)
+                if dbg > 0:
+                    print(f" [?] Printed char {hex(n)}")
             else:
                 hold.appendleft(curr)
                 ret.appendleft(".")
@@ -202,7 +221,7 @@ def interpret_SKI(expr: SKInode_T, dbg: bool = False) -> str:
     return _SKIEvalNode_str(curr)
 
 
-def interpret_SKI_from_str(code: str, dbg: bool = False) -> str:
+def interpret_SKI_from_str(code: str, dbg: int = 0) -> str:
 
     ski = ""
     for line in code.split("\n"):

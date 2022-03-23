@@ -28,25 +28,22 @@ subparsers = parser.add_subparsers(dest="action", help="Action")
 
 compile_args = subparsers.add_parser("compile", help="Compile Purr code", aliases=["c"])
 compile_args.add_argument(
-    "--infile", "-i", help="Input filename with Purr code", type=str, required=True
+    "-i", "--infile", help="Input filename with Purr code", type=str, required=True
 )
 compile_args.add_argument(
-    "--outfile",
-    "-o",
+    "-o", "--outfile",
     help="Output filename (without extension)",
     type=str,
     required=True,
 )
 compile_args.add_argument(
-    "--optimization",
-    "-opt",
+    "-opt", "--optimize",
     help="Toggle off optimization (default: %(default)s)",
     type=bool,
     default=True,
 )
 compile_args.add_argument(
-    "--intermediate",
-    "-m",
+    "-m", "--intermediate",
     help="Output intermediate representation (default: %(default)s)",
     type=bool,
     default=False,
@@ -54,18 +51,22 @@ compile_args.add_argument(
 
 run_args = subparsers.add_parser("run", help="Run SKIio code", aliases=["r"])
 run_args.add_argument(
-    "--infile", "-i", help="Input filename with SKIio code", type=str, required=True
+    "-i", "--infile", help="Input filename with SKIio code", type=str, required=True
 )
 run_args.add_argument(
-    "--debug",
-    "-dbg",
-    help="Step through debugger (default: %(default)s)",
-    type=bool,
-    default=False,
+    "-v", "--verbose",
+    help="Prints debugging info (default: %(default)s)",
+    action='store_true',
+    default=None,
+)
+run_args.add_argument(
+    "-vv", "--veryverbose",
+    help="Steps through execution (default: %(default)s)",
+    action='store_true',
+    default=None,
 )
 
 args = parser.parse_args()
-
 
 def main(args: argparse.Namespace) -> int:
 
@@ -73,7 +74,7 @@ def main(args: argparse.Namespace) -> int:
 
     if action in ["compile", "c"]:
 
-        i, o, m, opt = args.infile, args.outfile, args.intermediate, args.optimization
+        i, o, m, opt = args.infile, args.outfile, args.intermediate, args.optimize
         if not os.path.isfile(i):
             raise SKIioCLIException(f"Input file `infile={i}` does not exist!")
         i_code = open(i).read()
@@ -105,14 +106,14 @@ def main(args: argparse.Namespace) -> int:
 
     elif action in ["run", "r"]:
 
-        i, dbg = args.infile, args.debug
+        i, dbg_level = args.infile, 2 if args.veryverbose else 1 if args.verbose else 0
         if not os.path.isfile(i):
             raise SKIioCLIException(f"Input file `infile={i}` does not exist!")
         i_code = open(i).read()
 
         print(f"---- PROGRAM START ----")
         try:
-            ret = interpret_SKI_from_str(i_code, dbg)
+            ret = interpret_SKI_from_str(i_code, dbg_level)
         except SKIioInterpreterException as err:
             print(err)
             return 1

@@ -11,11 +11,17 @@
 [f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
 ~
 
+; inc(a) computes a+1
+#inc
+[n:[f:[x:f(n(f)(x))]]]
+~
+
 ; Main program
 !
-Zcom(
-    [f:
-        ATOM_OUT(ATOM_IN(ATOM_I))(f(ATOM_I)) ; loop indefinitely
+Zcom([f:
+    [index:
+        ATOM_OUT(ATOM_IN(index)) ; Print input byte at index
+        (f(inc(index)))
     ]
-)
+])(.00)
 ~

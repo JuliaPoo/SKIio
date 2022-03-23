@@ -24,7 +24,7 @@ compiled into _SKIio_ before being interpreted.
 - `ATOM_OUT`: The `o` combinator
     - `ATOM_OUT(x)` prints the church encoded integer `x` as a char (utf-8) and returns `ATOM_I`
 - `ATOM_IN`: The `i` combinator
-    - `ATOM_IN(x)` discards `x` (without evaluating), reads one byte of user input and returns the church encoded integer of the byte (utf-8)
+    - `ATOM_IN(x)`  returns the church encoded integer of a byte (utf-8) of input at index `x`, where `x` is a church encoded integer. If `x` is beyond what has been read, it pauses program execution and waits for more user input.
 - `ATOM_S`: The `S` combinator `[x:[y:[z:x(z)(y(z))]]]`
 - `ATOM_K`: The `K` combinator `[x:[y:x]]`
 - `ATOM_I`: The identity combinator `I`: `[x:x]`
@@ -54,7 +54,7 @@ E.g:
 ```lisp
 ; Main program
 !
-ATOM_OUT(ATOM_IN(I)) ; Main program reads and prints one byte of user input
+ATOM_OUT(ATOM_IN(.00)) ; Main program reads and prints one byte of user input
 ~
 ```
 

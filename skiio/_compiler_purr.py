@@ -432,7 +432,7 @@ def _topological_sort_macros(
     return _acc
 
 
-def compile_purr_to_node(code: str) -> SKInode_T:
+def compile_purr_to_node(code: str) -> Tuple[SKInode_T, Set[str]]:
 
     tokens = _tokenize(code)
     macros = _build_globals_dict(tokens)
