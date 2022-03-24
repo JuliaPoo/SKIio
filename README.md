@@ -97,6 +97,7 @@ Examples can be found in the [examples](https://github.com/JuliaPoo/SKIio/exampl
 - [Echo Server](https://github.com/JuliaPoo/SKIio/examples/echo-server.ski)
 - [Hello World](https://github.com/JuliaPoo/SKIio/examples/hello-world.ski)
 - [Fizz Buzz](https://github.com/JuliaPoo/SKIio/examples/fizz-buzz.ski)
+- [Rot Strings](https://github.com/JuliaPoo/SKIio/examples/rot-strings.ski)
 
 ## Purr
 

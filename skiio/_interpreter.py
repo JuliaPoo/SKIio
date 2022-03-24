@@ -78,6 +78,7 @@ def _atom_p(expr: _SKIEvalNode_T) -> _SKIEvalNode_T:
 
     # print("-->", expr, "<--")
     sys.stdout.write(chr(expr))
+    sys.stdout.flush()
 
     return "I"
 

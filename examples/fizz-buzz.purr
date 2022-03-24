@@ -2,9 +2,9 @@
 ; | Fizz Buzz in Purr! |
 ; +--------------------+
 ; Building:
-;   python -m skiio compile -i fizzbuzz.purr -o fizzbuzz.ski
+;   python -m skiio compile -i fizz-buzz.purr -o fizz-buzz.ski
 ; Running:
-;   python -m skiio run -i fizzbuzz.ski
+;   python -m skiio run -i fizz-buzz.ski
 
 ; ---------
 ;   Utils

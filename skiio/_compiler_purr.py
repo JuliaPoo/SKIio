@@ -273,7 +273,8 @@ def _build_macro(
 
     if namespace is None:
         namespace = {}
-
+    nnamespace = namespace.copy()
+    
     if len(tokens) == 0:
         raise PurrCompileInternalException(
             "Macro is empty!", curr_macro.line, curr_macro.col
@@ -301,8 +302,7 @@ def _build_macro(
                 f"Unexpected token: `{t1}`, expected a variable name!", t1.line, t1.col
             )
 
-        namespace = namespace.copy()
-        namespace[t1.tok] = t1
+        nnamespace[t1.tok] = t1
 
         # [x:y] at :
         if t2.type != TokenType.DECL_MID:
@@ -312,19 +312,19 @@ def _build_macro(
 
         # [x:y] at y
         defi = _get_balancing_bracket(tokens, TokenType.DECL_START, TokenType.DECL_END)
-        definode, free = _build_macro(curr_macro, tokens[3:defi], namespace)
+        definode, free = _build_macro(curr_macro, tokens[3:defi], nnamespace)
         node: SKInode_T = SKInode(NodeType.DECL, (t1.tok, definode))
         idx = defi + 1  # Points to after the function
 
     elif tok.type == TokenType.CALL_START:
 
         argi = _get_balancing_bracket(tokens, TokenType.CALL_START, TokenType.CALL_END)
-        node, free = _build_macro(curr_macro, tokens[1:argi], namespace)
+        node, free = _build_macro(curr_macro, tokens[1:argi], nnamespace)
         idx = argi + 1  # Points to after function
 
     elif tok.type == TokenType.NAME or tok.type == TokenType.RESERVED_NAME:
 
-        if tok.tok in namespace.keys():
+        if tok.tok in nnamespace.keys():
             node = tok.tok
             free = {}
         else:

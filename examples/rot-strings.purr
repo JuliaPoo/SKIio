@@ -1,0 +1,229 @@
+; +----------------------+
+; | Rot Strings in Purr! |
+; +----------------------+
+; Building:
+;   python -m skiio compile -i rot-strings.purr -o rot-strings
+; Running:
+;   python -m skiio run -i rot-strings.ski
+
+; ---------
+;   Utils
+; ---------
+
+; Z combinator
+#zcom
+[f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
+~
+
+; -------------
+;   Booleans
+; -------------
+
+#true   ; Represents boolean true
+[x:[y:x]]
+~
+
+#false   ; Represents boolean false
+[x:[y:y]]
+~
+
+#and    ; and(a)(b) computes a&b
+[a:[b:a(b(true)(false))(false)]]
+~
+
+#or     ; or(a)(b) computes a|b
+[a:[b:a(true)(b(true)(false))]]
+~
+
+; ------------
+;   Naturals
+; ------------
+
+; inc(a) computes a+1
+#inc
+[n:[f:[x:f(n(f)(x))]]]
+~
+
+; dec(a) computes a-1
+#dec
+[n:[f:[x:n([g:[y:y(g(f))]])([y:x])([y:y])]]]
+~
+
+; add(a)(b) computes a+b
+#add
+[a:[b:b(inc)(a)]]
+~
+
+#sub    ; sub(a)(b) computes a-b
+[a:[b:b(dec)(a)]]
+~
+
+; mul(a)(b) computes a*b
+#mul
+[a:[b:b([y:add(y)(a)])(.00)]]
+~
+
+; is_zero(n) returns true if n is 0
+#is_zero
+[n:n([y:false])(true)]
+~
+
+; less(a)(b) returns true if a<b
+#less
+[a:[b:is_zero(sub(inc(a))(b))]]
+~
+
+; less_equal(a)(b) returns true if a<=b
+#less_equal
+[a:[b:is_zero(sub(a)(b))]]
+~
+
+; greater_equal(a)(b) returns true if a>=b
+#greater_equal
+[a:[b:is_zero(sub(b)(a))]]
+~
+
+; equal(a,b) returns true if a==b
+#equal
+[a:[b:less_equal(a)(b)(greater_equal(a)(b))(false)]]
+~
+
+; mod(a,b) computes a%b
+#mod
+zcom([f:
+    [a:[b:
+        less(a)(b)
+            (a) ; Return a
+            (f(sub(a)(b))(b)) ; Return f(a-b, b)
+    ]]
+])
+~
+
+; quo(a,b) computes a//b
+#quo
+zcom([f:
+    [ret:[a:[b:
+        less(a)(b)
+            (ret)
+            (f(inc(ret))(sub(a)(b))(b))
+    ]]]
+])(.00)
+~
+
+; ---------
+;   Pairs
+; ---------
+
+; Represents a tuple of 2 objects
+; Indexed by true and false
+#pair
+[x:[y:[f:f(x)(y)]]]
+~
+
+; pair_left(pair) retrieves left object of pair
+#pair_left
+[p:p(true)]
+~
+
+; pair_right(pair) retrieves right object of pair
+#pair_right
+[p:p(false)]
+~
+
+; ------------
+;   Program
+; ------------
+
+; Prints `Rot: `
+#print_rot_str
+[o:
+    o(.R)(o(.o))(o(.t))(o(.3a))(o(.20))
+](ATOM_OUT)
+~
+
+; Prints `String: `
+#print_string_str
+[o:
+    o(.S)(o(.t))(o(.r))(o(.i))(o(.n))(o(.g))(o(.3a))(o(.20))
+](ATOM_OUT)
+~
+
+; Prints `Result: `
+#print_result_str
+[o:
+    o(.R)(o(.e))(o(.s))(o(.u))(o(.l))(o(.t))(o(.3a))(o(.20))
+](ATOM_OUT)
+~
+
+; Prints `[x] Not an int!\n`
+#print_read_int_error
+[o:
+    o(.5b)(o(.x))(o(.5d))(o(.20))
+    (o(.N))(o(.o))(o(.t))(o(.20))
+    (o(.a))(o(.n))(o(.20))
+    (o(.i))(o(.n))(o(.t))(o(.21))(o(.0a))
+](ATOM_OUT)
+~
+
+; Read integer from user input
+; read_int(index) returns (index, (int, bool))
+; `index` points to the newline
+#read_int
+zcom([f:
+    [int: [success: [index:
+        [i: ; Input char
+            equal(i)(.0a) ; Check if equal to newline
+                (pair(index)(pair(int)(success))) ; Return index, (n, success)
+                ; Check if i is between .0 and .9
+                (and(greater_equal(i)(.0))(less_equal(i)(.9))
+                    (f
+                        ; return = 10*return + (i-ord('0'))
+                        (add(mul(int)(.0a))(sub(i)(.0)))
+                        (success)
+                        (inc(index))
+                    )
+                    (f(.00)(false)(inc(index))) ; Return success=false
+                )
+        ](ATOM_IN(index))
+    ]]]
+])(.00)(true)
+~
+
+; Do the rotting
+#rot
+[rot:[index:
+    zcom([f: ; Loop every char until newline
+        [index:
+            [i: ; Input char
+                equal(i)(.0a) ; Check if equal to newline
+                    (ATOM_I) ; Return I
+                    (
+                        (and(greater_equal(i)(.a))(less_equal(i)(.z)) ; lowercase
+                            (ATOM_OUT(add(mod(add(sub(i)(.a))(rot))(.1a))(.a)))
+                        (and(greater_equal(i)(.A))(less_equal(i)(.Z)) ; uppercase
+                            ((ATOM_OUT(add(mod(add(sub(i)(.A))(rot))(.1a))(.A))))
+                            (ATOM_OUT(i))
+                        ))
+                        (f(inc(index))) ; Next char
+                    )
+            ](ATOM_IN(index))
+        ]
+    ])(index)
+]]
+~
+
+!
+print_rot_str(
+    [ret: [index: [int:
+        pair_right(int)
+            ; int is valid
+            (print_string_str(
+                rot(pair_left(int))(inc(index))
+            ))
+            ; print error
+            (print_read_int_error)
+    ](pair_right(ret))
+    ](pair_left(ret))
+    ](read_int(.00))
+)
+~
