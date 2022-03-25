@@ -51,7 +51,8 @@
 ;    |[a:[b:b(inc)(a)]]
 ;    |~
 ;    |
-;    |#sub    ; sub(a)(b) computes a-b
+;    |; sub(a)(b) computes a-b
+;    |#sub
 ;    |[a:[b:b(dec)(a)]]
 ;    |~
 ;    |

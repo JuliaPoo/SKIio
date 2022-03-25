@@ -54,7 +54,8 @@
 [a:[b:b(inc)(a)]]
 ~
 
-#sub    ; sub(a)(b) computes a-b
+; sub(a)(b) computes a-b
+#sub
 [a:[b:b(dec)(a)]]
 ~
 
@@ -198,12 +199,14 @@ zcom([f:
                 equal(i)(.0a) ; Check if equal to newline
                     (ATOM_I) ; Return I
                     (
-                        (and(greater_equal(i)(.a))(less_equal(i)(.z)) ; lowercase
-                            (ATOM_OUT(add(mod(add(sub(i)(.a))(rot))(.1a))(.a)))
-                        (and(greater_equal(i)(.A))(less_equal(i)(.Z)) ; uppercase
-                            ((ATOM_OUT(add(mod(add(sub(i)(.A))(rot))(.1a))(.A))))
-                            (ATOM_OUT(i))
-                        ))
+                        ATOM_OUT(
+                            (and(greater_equal(i)(.a))(less_equal(i)(.z)) ; lowercase
+                                (add(mod(add(sub(i)(.a))(rot))(.1a))(.a))
+                            (and(greater_equal(i)(.A))(less_equal(i)(.Z)) ; uppercase
+                                (add(mod(add(sub(i)(.A))(rot))(.1a))(.A))
+                                (i)
+                            ))
+                        )
                         (f(inc(index))) ; Next char
                     )
             ](ATOM_IN(index))

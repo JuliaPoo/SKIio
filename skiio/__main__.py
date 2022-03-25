@@ -131,7 +131,7 @@ def main(args: argparse.Namespace) -> int:
             print("[x] Program terminated by user!")
             return 1
         print(f"\n----- PROGRAM END -----")
-        print(f"\n[*] Return: {ret if len(ret) < 10 else ret[:10] + '...'}")
+        print(f"[*] Return: {ret if len(ret) < 10 else ret[:10] + '...'}")
         return 0
 
     raise SKIioCLIInternalException(f"Unknown action {action}")

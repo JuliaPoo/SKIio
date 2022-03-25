@@ -7,7 +7,7 @@
 ;   python -m skiio run -i echo-server.ski
 
 ; Z Combinator
-#Zcom
+#zcom
 [f:[g:f(g(g))]([g:f([y:g(g)(y)])])]
 ~
 
@@ -18,7 +18,7 @@
 
 ; Main program
 !
-Zcom([f:
+zcom([f:
     [index:
         ATOM_OUT(ATOM_IN(index)) ; Print input byte at index
         (f(inc(index)))
